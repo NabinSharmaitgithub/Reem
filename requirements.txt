@@ -1,0 +1,19 @@
+# Reem AI Assistant - Python Desktop
+# Install: pip install -r requirements.txt
+
+# Core
+python-dotenv>=1.0.0
+
+# AI
+openai>=0.28.0
+requests>=2.31.0
+
+# Voice
+speechrecognition>=3.8.1
+pyttsx3>=2.90
+gtts>=2.4.0
+edge-tts>=6.1.0
+
+# Web (optional)
+flask>=2.3.0
+gunicorn>=21.0.0
