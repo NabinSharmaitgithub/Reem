@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react"
 import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { ArrowUp, Paperclip, Square, X, StopCircle, Mic, Globe, BrainCog, FolderCode, ChevronDown, Check } from "lucide-react"
+import { ArrowUp, Paperclip, Square, X, StopCircle, Mic, Globe, BrainCog, Code, ChevronDown, Check } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 const cn = (...classes: (string | undefined | null | false)[]) => classes.filter(Boolean).join(" ")
