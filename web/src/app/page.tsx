@@ -2,36 +2,19 @@
 
 import React, { useState, useRef, useEffect } from "react"
 import { ArrowUp, Plus, Settings, User, Bot, Trash2, MessageSquare } from "lucide-react"
-import { motion } from "framer-motion"
 
 const cn = (...classes: (string | undefined | null | false)[]) => classes.filter(Boolean).join(" ")
 
 const styles = `
-  *:focus-visible { outline-offset: 0 !important; }
-  textarea::-webkit-scrollbar { width: 4px; }
-  textarea::-webkit-scrollbar-track { background: transparent; }
-  textarea::-webkit-scrollbar-thumb { background-color: #555; border-radius: 2px; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background-color: #555; border-radius: 3px; }
 `
 
-const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(
-  ({ className, ...props }, ref) => (
-    <textarea className={cn("flex w-full rounded-md border-none bg-transparent px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] resize-none", className)} ref={ref} {...props} />
-  )
-)
-Textarea.displayName = "Textarea"
-
-interface Message {
-  id: string
-  role: "user" | "assistant"
-  content: string
-  timestamp: Date
-}
-
-interface Chat {
-  id: string
-  title: string
-  messages: Message[]
-}
+interface Message { id: string; role: "user" | "assistant"; content: string; timestamp: Date }
+interface Chat { id: string; title: string; messages: Message[] }
 
 const MODELS = [
   { id: "gpt-3.5", name: "GPT-3.5" },
@@ -79,12 +62,7 @@ export default function Home() {
     if (!input.trim() || isLoading) return
 
     const userMessage: Message = { id: Date.now().toString(), role: "user", content: input.trim(), timestamp: new Date() }
-    
-    const updatedChats = chats.map(chat => 
-      chat.id === currentChatId 
-        ? { ...chat, messages: [...chat.messages, userMessage], title: chat.messages.length === 1 && chat.title === "New Chat" ? input.slice(0, 30) + "..." : chat.title }
-        : chat
-    )
+    const updatedChats = chats.map(chat => chat.id === currentChatId ? { ...chat, messages: [...chat.messages, userMessage], title: chat.messages.length === 1 && chat.title === "New Chat" ? input.slice(0, 30) + "..." : chat.title } : chat)
     setChats(updatedChats)
     setInput("")
     setIsLoading(true)
@@ -94,111 +72,119 @@ export default function Home() {
       const data = await response.json()
       const assistantMessage: Message = { id: (Date.now() + 1).toString(), role: "assistant", content: data.response, timestamp: new Date() }
       setChats(chats.map(chat => chat.id === currentChatId ? { ...chat, messages: [...chat.messages, assistantMessage] } : chat))
-
-      if (voiceEnabled && data.response) {
-        const utterance = new SpeechSynthesisUtterance(data.response)
-        speechSynthesis.speak(utterance)
-      }
+      if (voiceEnabled && data.response) { speechSynthesis.speak(new SpeechSynthesisUtterance(data.response)) }
     } catch (error) {
       setChats(chats.map(chat => chat.id === currentChatId ? { ...chat, messages: [...chat.messages, { id: (Date.now() + 1).toString(), role: "assistant", content: "Sorry, something went wrong.", timestamp: new Date() }] } : chat))
     }
     setIsLoading(false)
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit() } }
-
   const hasContent = input.trim() !== ""
 
+  const sidebarStyle: React.CSSProperties = { width: 260, backgroundColor: "#202123", display: "flex", flexDirection: "column", height: "100vh" }
+  const mainStyle: React.CSSProperties = { flex: 1, display: "flex", flexDirection: "column", backgroundColor: "#343541", height: "100vh" }
+  const headerStyle: React.CSSProperties = { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", borderBottom: "1px solid #2e2e2e" }
+  const messagesStyle: React.CSSProperties = { flex: 1, overflowY: "auto", padding: 16 }
+  const inputContainerStyle: React.CSSProperties = { maxWidth: 768, margin: "0 auto", width: "100%", padding: "0 16px 16px" }
+  const inputStyle: React.CSSProperties = { borderRadius: 12, border: "1px solid #4a4a4a", backgroundColor: "#40414e", padding: 12, color: "white", fontSize: 15, width: "100%", resize: "none" as const, outline: "none", fontFamily: "inherit" }
+  const messageContainerStyle: React.CSSProperties = { maxWidth: 768, margin: "0 auto", display: "flex", gap: 12, marginBottom: 16 }
+  const avatarStyle: React.CSSProperties = { width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }
+  const userAvatarStyle: React.CSSProperties = { ...avatarStyle, backgroundColor: "#5436da" }
+  const botAvatarStyle: React.CSSProperties = { ...avatarStyle, backgroundColor: "#5436da" }
+  const messageBubbleStyle: React.CSSProperties = { borderRadius: 12, padding: "12px 16px", fontSize: 15, lineHeight: 1.5, whiteSpace: "pre-wrap", maxWidth: "calc(100% - 48px)" }
+
   return (
-    <div className="flex h-screen bg-[#343541]">
+    <div style={{ display: "flex", height: "100vh", backgroundColor: "#343541" }}>
       {/* Sidebar */}
-      <div className="w-64 bg-[#202123] flex flex-col">
-        <div className="p-3">
-          <button onClick={createNewChat} className="flex items-center justify-center gap-2 w-full p-3 rounded-lg bg-[#5436da] hover:bg-[#6436eb] text-white font-medium transition-colors">
-            <Plus className="w-4 h-4" />
+      <div style={sidebarStyle}>
+        <div style={{ padding: 12 }}>
+          <button onClick={createNewChat} style={{ width: "100%", padding: 12, borderRadius: 8, backgroundColor: "#5436da", color: "white", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 14, fontWeight: 500 }}>
+            <Plus size={16} />
             New Chat
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-3 py-2">
-          <div className="text-xs text-gray-500 uppercase px-2 py-2">Recent</div>
+        <div style={{ flex: 1, overflowY: "auto", padding: "8px 12px" }}>
+          <div style={{ fontSize: 11, color: "#6b6b6b", textTransform: "uppercase", padding: "8px", fontWeight: 500 }}>Recent</div>
           {chats.map(chat => (
-            <div key={chat.id} onClick={() => setCurrentChatId(chat.id)} className={cn("group flex items-center justify-between w-full p-2.5 rounded-lg text-sm text-gray-200 cursor-pointer mb-1", currentChatId === chat.id ? "bg-[#343541]" : "hover:bg-[#343541]/50")}>
-              <div className="flex items-center gap-2 overflow-hidden">
-                <MessageSquare className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate">{chat.title}</span>
+            <div key={chat.id} onClick={() => setCurrentChatId(chat.id)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px", borderRadius: 6, cursor: "pointer", marginBottom: 2, backgroundColor: currentChatId === chat.id ? "#343541" : "transparent", color: "#ececf1" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, overflow: "hidden" }}>
+                <MessageSquare size={16} />
+                <span style={{ fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{chat.title}</span>
               </div>
-              <button onClick={(e) => deleteChat(e, chat.id)} className="opacity-0 group-hover:opacity-100 p-1 hover:text-red-400">
-                <Trash2 className="w-4 h-4" />
+              <button onClick={(e) => deleteChat(e, chat.id)} style={{ background: "none", border: "none", color: "#6b6b6b", cursor: "pointer", padding: 4, opacity: 0, display: "flex" }} className="delete-btn">
+                <Trash2 size={16} />
               </button>
             </div>
           ))}
         </div>
 
-        <div className="p-3 border-t border-[#343541]">
-          <div className="flex items-center gap-2 p-2 text-gray-300 text-sm hover:bg-[#343541] rounded-lg cursor-pointer">
-            <Settings className="w-4 h-4" />
+        <div style={{ padding: 12, borderTop: "1px solid #343541" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: 8, borderRadius: 6, cursor: "pointer", color: "#ececf1", fontSize: 14 }}>
+            <Settings size={16} />
             Settings
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      {/* Main */}
+      <div style={mainStyle}>
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#2e2e2e]">
-          <div className="flex items-center gap-2">
-            <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} className="bg-transparent text-white text-sm font-medium cursor-pointer focus:outline-none">
-              {MODELS.map(m => <option key={m.id} value={m.id} className="bg-[#202123]">{m.name}</option>)}
-            </select>
-          </div>
-          <button onClick={() => setVoiceEnabled(!voiceEnabled)} className={cn("px-3 py-1.5 rounded-lg text-sm font-medium transition-all", voiceEnabled ? "bg-green-600/20 text-green-400" : "text-gray-400")}>
+        <div style={headerStyle}>
+          <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} style={{ background: "transparent", color: "white", border: "none", fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
+            {MODELS.map(m => <option key={m.id} value={m.id} style={{ backgroundColor: "#202123" }}>{m.name}</option>)}
+          </select>
+          <button onClick={() => setVoiceEnabled(!voiceEnabled)} style={{ padding: "6px 12px", borderRadius: 6, border: "none", fontSize: 14, fontWeight: 500, cursor: "pointer", backgroundColor: voiceEnabled ? "rgba(34, 197, 94, 0.2)" : "transparent", color: voiceEnabled ? "#22c55e" : "#9ca3af" }}>
             {voiceEnabled ? "🔊 Voice On" : "🔇"}
           </button>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="max-w-3xl mx-auto space-y-4">
-            {messages.map(message => (
-              <motion.div key={message.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={cn("flex gap-3", message.role === "user" ? "flex-row-reverse" : "")}>
-                <div className={cn("w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0", message.role === "user" ? "bg-green-600" : "bg-[#5436da]")}>
-                  {message.role === "user" ? <User className="w-5 h-5 text-white" /> : <Bot className="w-5 h-5 text-white" />}
-                </div>
-                <div className={cn("flex-1 px-4 py-3 rounded-lg text-sm", message.role === "user" ? "bg-[#5436da]" : "bg-[#343541]")}>
-                  <p className="text-white whitespace-pre-wrap leading-relaxed">{message.content}</p>
-                </div>
-              </motion.div>
-            ))}
-            {isLoading && (
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-[#5436da] flex items-center justify-center"><Bot className="w-5 h-5 text-white" /></div>
-                <div className="flex items-center gap-1 pt-3">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-                </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
+        <div style={messagesStyle}>
+          <div style={messageContainerStyle}>
+            <div style={userAvatarStyle}><User size={20} color="white" /></div>
+            <div style={{ ...messageBubbleStyle, backgroundColor: "#5436da", color: "white" }}>Hello! I'm Reem. Select a model and start chatting!</div>
           </div>
+          
+          {messages.filter(m => m.id !== "welcome").map(message => (
+            <div key={message.id} style={messageContainerStyle}>
+              <div style={message.role === "user" ? userAvatarStyle : botAvatarStyle}>
+                {message.role === "user" ? <User size={20} color="white" /> : <Bot size={20} color="white" />}
+              </div>
+              <div style={{ ...messageBubbleStyle, backgroundColor: message.role === "user" ? "#5436da" : "#343541", color: "white" }}>{message.content}</div>
+            </div>
+          ))}
+          
+          {isLoading && (
+            <div style={messageContainerStyle}>
+              <div style={botAvatarStyle}><Bot size={20} color="white" /></div>
+              <div style={{ display: "flex", gap: 4, paddingTop: 12 }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#999", animation: "bounce 1s infinite" }} />
+                <div style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#999", animation: "bounce 1s infinite 0.15s" }} />
+                <div style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#999", animation: "bounce 1s infinite 0.3s" }} />
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
         </div>
 
         {/* Input */}
-        <div className="p-4">
-          <div className="max-w-3xl mx-auto">
-            <div className={cn("rounded-xl border border-[#4a4a4a] bg-[#40414e] p-1", isLoading && "border-red-500/50")}>
-              <Textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Send a message..." className="text-base max-h-40" disabled={isLoading} />
-              <div className="flex justify-end px-2 pb-1">
-                <button onClick={handleSubmit} disabled={!hasContent || isLoading} className={cn("p-1.5 rounded-lg transition-colors", hasContent ? "bg-green-600 hover:bg-green-700" : "bg-gray-600 opacity-50")}>
-                  <ArrowUp className="w-4 h-4 text-white" />
-                </button>
-              </div>
-            </div>
-            <p className="text-center text-xs text-gray-500 mt-2">{selectedModel} model • AI can make mistakes. Verify important information.</p>
+        <div style={inputContainerStyle}>
+          <div style={{ ...inputStyle, height: 56, display: "flex", alignItems: "center", position: "relative" }}>
+            <textarea value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit() } }} placeholder="Send a message..." disabled={isLoading} style={{ ...inputStyle, height: "auto", minHeight: 44, maxHeight: 200, border: "none", background: "transparent", paddingRight: 40, position: "absolute", inset: 0 }} />
+            <button onClick={handleSubmit} disabled={!hasContent || isLoading} style={{ position: "absolute", right: 8, bottom: 8, padding: 6, borderRadius: 6, border: "none", cursor: hasContent && !isLoading ? "pointer" : "not-allowed", backgroundColor: hasContent && !isLoading ? "#22c55e" : "#555", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <ArrowUp size={18} color="white" />
+            </button>
           </div>
+          <p style={{ textAlign: "center", fontSize: 12, color: "#6b6b6b", marginTop: 8 }}>{selectedModel} model • AI can make mistakes. Verify important information.</p>
         </div>
       </div>
+
+      <style>{`
+        .delete-btn:hover { opacity: 1 !important; }
+        div:hover .delete-btn { opacity: 1; }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+      `}</style>
     </div>
   )
 }
