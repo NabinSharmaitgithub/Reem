@@ -173,7 +173,9 @@ export default function Home() {
     const styleSheet = document.createElement("style")
     styleSheet.innerText = styles
     document.head.appendChild(styleSheet)
-    return () => document.head.removeChild(styleSheet)
+    return () => {
+      document.head.removeChild(styleSheet)
+    }
   }, [])
 
   const currentModel = MODELS.find(m => m.id === selectedModel)
