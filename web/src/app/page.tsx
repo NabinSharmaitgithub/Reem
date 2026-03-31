@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from "react"
-import { ArrowUp, Plus, Settings, User, Bot, Trash2, MessageSquare } from "lucide-react"
+import { ArrowUp, Plus, Settings, User, Bot, Trash2, MessageSquare, ChevronDown } from "lucide-react"
 
 const cn = (...classes: (string | undefined | null | false)[]) => classes.filter(Boolean).join(" ")
 
@@ -13,16 +13,11 @@ const styles = `
   ::-webkit-scrollbar-thumb { background-color: #555; border-radius: 3px; }
 `
 
+interface Model { id: string; name: string; provider: string; free?: boolean }
 interface Message { id: string; role: "user" | "assistant"; content: string; timestamp: Date }
 interface Chat { id: string; title: string; messages: Message[] }
 
-const MODELS = [
-  { id: "gpt-3.5", name: "GPT-3.5" },
-  { id: "gpt-4", name: "GPT-4" },
-  { id: "claude-3", name: "Claude 3" },
-  { id: "llama-3", name: "Llama 3" },
-  { id: "mixtral", name: "Mixtral" },
-]
+const DEFAULT_MODEL = "llama-3.1-8b"
 
 export default function Home() {
   const [chats, setChats] = useState<Chat[]>([{ id: "1", title: "New Chat", messages: [{ id: "welcome", role: "assistant", content: "Hello! I'm Reem. Select a model and start chatting!", timestamp: new Date() }] }])
@@ -30,11 +25,36 @@ export default function Home() {
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [voiceEnabled, setVoiceEnabled] = useState(true)
-  const [selectedModel, setSelectedModel] = useState("gpt-4")
+  const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL)
+  const [showModelDropdown, setShowModelDropdown] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const models: Model[] = [
+    { id: "llama-3.1-8b", name: "Llama 3.1 8B", provider: "Meta", free: true },
+    { id: "llama-3.1-70b", name: "Llama 3.1 70B", provider: "Meta", free: true },
+    { id: "llama-3-70b", name: "Llama 3 70B", provider: "Meta", free: true },
+    { id: "llama-3-8b", name: "Llama 3 8B", provider: "Meta", free: true },
+    { id: "mixtral-8x7b", name: "Mixtral 8x7B", provider: "Mistral", free: true },
+    { id: "mixtral-8x22b", name: "Mixtral 8x22B", provider: "Mistral", free: true },
+    { id: "phi-3.5", name: "Phi 3.5 Mini", provider: "Microsoft", free: true },
+    { id: "qwen-2.5", name: "Qwen 2.5 7B", provider: "Alibaba", free: true },
+    { id: "gemma-2-9b", name: "Gemma 2 9B", provider: "Google", free: true },
+    { id: "deepseek-v2.5", name: "DeepSeek V2.5", provider: "DeepSeek", free: true },
+    { id: "gpt-4o-mini", name: "GPT-4o Mini", provider: "OpenAI" },
+    { id: "gpt-4o", name: "GPT-4o", provider: "OpenAI" },
+    { id: "gpt-4-turbo", name: "GPT-4 Turbo", provider: "OpenAI" },
+    { id: "gpt-3.5-turbo", name: "GPT-3.5 Turbo", provider: "OpenAI" },
+    { id: "claude-3.5-sonnet", name: "Claude 3.5 Sonnet", provider: "Anthropic" },
+    { id: "claude-3-haiku", name: "Claude 3 Haiku", provider: "Anthropic" },
+    { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash", provider: "Google" },
+    { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro", provider: "Google" },
+  ]
 
   const currentChat = chats.find(c => c.id === currentChatId) || chats[0]
   const messages = currentChat.messages
+  const currentModel = models.find(m => m.id === selectedModel) || models[0]
+  const freeModels = models.filter(m => m.free)
+  const paidModels = models.filter(m => !m.free)
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }) }, [messages])
 
@@ -131,9 +151,33 @@ export default function Home() {
       <div style={mainStyle}>
         {/* Header */}
         <div style={headerStyle}>
-          <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} style={{ background: "transparent", color: "white", border: "none", fontSize: 14, fontWeight: 500, cursor: "pointer" }}>
-            {MODELS.map(m => <option key={m.id} value={m.id} style={{ backgroundColor: "#202123" }}>{m.name}</option>)}
-          </select>
+          <div style={{ position: "relative" }}>
+            <button onClick={() => setShowModelDropdown(!showModelDropdown)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, backgroundColor: "#202123", border: "1px solid #4a4a4a", color: "white", cursor: "pointer", fontSize: 14 }}>
+              <span>{currentModel?.name}</span>
+              {currentModel?.free && <span style={{ fontSize: 10, backgroundColor: "#22c55e", color: "white", padding: "2px 6px", borderRadius: 4 }}>FREE</span>}
+              <ChevronDown size={16} />
+            </button>
+            
+            {showModelDropdown && (
+              <div style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, width: 280, maxHeight: 400, overflowY: "auto", backgroundColor: "#202123", border: "1px solid #4a4a4a", borderRadius: 12, zIndex: 100, boxShadow: "0 8px 30px rgba(0,0,0,0.5)" }}>
+                <div style={{ padding: "12px 16px", fontSize: 11, color: "#6b6b6b", fontWeight: 500, borderBottom: "1px solid #343541" }}>FREE MODELS</div>
+                {freeModels.map(m => (
+                  <button key={m.id} onClick={() => { setSelectedModel(m.id); setShowModelDropdown(false) }} style={{ width: "100%", padding: "12px 16px", textAlign: "left", backgroundColor: selectedModel === m.id ? "#343541" : "transparent", border: "none", color: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div><div style={{ fontSize: 14 }}>{m.name}</div><div style={{ fontSize: 11, color: "#6b6b6b" }}>{m.provider}</div></div>
+                    {selectedModel === m.id && <div style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#22c55e" }} />}
+                  </button>
+                ))}
+                <div style={{ padding: "12px 16px", fontSize: 11, color: "#6b6b6b", fontWeight: 500, borderTop: "1px solid #343541", borderBottom: "1px solid #343541" }}>PAID MODELS</div>
+                {paidModels.map(m => (
+                  <button key={m.id} onClick={() => { setSelectedModel(m.id); setShowModelDropdown(false) }} style={{ width: "100%", padding: "12px 16px", textAlign: "left", backgroundColor: selectedModel === m.id ? "#343541" : "transparent", border: "none", color: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div><div style={{ fontSize: 14 }}>{m.name}</div><div style={{ fontSize: 11, color: "#6b6b6b" }}>{m.provider}</div></div>
+                    {selectedModel === m.id && <div style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#22c55e" }} />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          
           <button onClick={() => setVoiceEnabled(!voiceEnabled)} style={{ padding: "6px 12px", borderRadius: 6, border: "none", fontSize: 14, fontWeight: 500, cursor: "pointer", backgroundColor: voiceEnabled ? "rgba(34, 197, 94, 0.2)" : "transparent", color: voiceEnabled ? "#22c55e" : "#9ca3af" }}>
             {voiceEnabled ? "🔊 Voice On" : "🔇"}
           </button>
@@ -141,12 +185,7 @@ export default function Home() {
 
         {/* Messages */}
         <div style={messagesStyle}>
-          <div style={messageContainerStyle}>
-            <div style={userAvatarStyle}><User size={20} color="white" /></div>
-            <div style={{ ...messageBubbleStyle, backgroundColor: "#5436da", color: "white" }}>Hello! I'm Reem. Select a model and start chatting!</div>
-          </div>
-          
-          {messages.filter(m => m.id !== "welcome").map(message => (
+          {messages.map(message => (
             <div key={message.id} style={messageContainerStyle}>
               <div style={message.role === "user" ? userAvatarStyle : botAvatarStyle}>
                 {message.role === "user" ? <User size={20} color="white" /> : <Bot size={20} color="white" />}
@@ -176,9 +215,11 @@ export default function Home() {
               <ArrowUp size={18} color="white" />
             </button>
           </div>
-          <p style={{ textAlign: "center", fontSize: 12, color: "#6b6b6b", marginTop: 8 }}>{selectedModel} model • AI can make mistakes. Verify important information.</p>
+          <p style={{ textAlign: "center", fontSize: 12, color: "#6b6b6b", marginTop: 8 }}>{currentModel?.name} • AI can make mistakes.</p>
         </div>
       </div>
+
+      {showModelDropdown && <div style={{ position: "fixed", inset: 0, zIndex: 50 }} onClick={() => setShowModelDropdown(false)} />}
 
       <style>{`
         .delete-btn:hover { opacity: 1 !important; }
