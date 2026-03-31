@@ -106,8 +106,9 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     models: Object.entries(MODELS).map(([key, value]) => ({
-      id: key,
-      ...value
+      key,
+      name: value.name,
+      provider: value.provider
     })),
     default: DEFAULT_MODEL
   })
