@@ -49,7 +49,5 @@ logs/
 temp/
 
 # Web / Next.js
-web/__pycache__/
-*.pyc
 .next/
 node_modules/
