@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react"
 import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 import { ArrowUp, Square, Mic, ChevronDown, Check } from "lucide-react"
 import { motion } from "framer-motion"
-import { cn } from "../../lib/utils"
+import { cn } from "../lib/utils"
 
 const TooltipProvider = TooltipPrimitive.Provider
 const Tooltip = TooltipPrimitive.Root
