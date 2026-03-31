@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 
-const MODELS = {
+type ModelConfig = {
+  id: string
+  name: string
+  provider: string
+}
+
+const MODELS: Record<string, ModelConfig> = {
   "gpt-3.5": {
     id: "openai/gpt-3.5-turbo",
     name: "GPT-3.5 Turbo",
@@ -32,7 +38,9 @@ const DEFAULT_MODEL = "gpt-3.5"
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, model = DEFAULT_MODEL } = await request.json()
+    const body = await request.json()
+    const message = body.message
+    const model = body.model || DEFAULT_MODEL
 
     if (!message) {
       return NextResponse.json({ error: "No message provided" }, { status: 400 })
@@ -71,8 +79,8 @@ export async function POST(request: NextRequest) {
     })
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}))
-      console.error("OpenRouter Error:", error)
+      const errorData = await response.json().catch(() => ({}))
+      console.error("OpenRouter Error:", errorData)
       return NextResponse.json({
         response: "I'm having some trouble thinking right now. Let's try again.",
         model: selectedModel.name
